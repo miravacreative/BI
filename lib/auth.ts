@@ -469,31 +469,23 @@ export const deletePage = (pageId: string, userId: string): boolean => {
 }
 
 export const logActivity = (userId: string, action: string, details: string): void => {
-  const timestamp = new Date()
-
   const activity: ActivityLog = {
     id: Date.now().toString(),
     userId,
     action,
     details,
-    timestamp,
+    timestamp: new Date(),
     ipAddress: "192.168.1." + Math.floor(Math.random() * 255),
   }
 
   activityLogs.unshift(activity)
 
+  // Keep only last 1000 logs
   if (activityLogs.length > 1000) {
     activityLogs = activityLogs.slice(0, 1000)
   }
 }
 
-  activityLogs.unshift(activity) // Add to beginning
-
-  // Keep only last 1000 activities
-  if (activityLogs.length > 1000) {
-    activityLogs = activityLogs.slice(0, 1000)
-  }
-}
 
 export const getActivityLogs = (limit = 50): ActivityLog[] => {
   return activityLogs.slice(0, limit)
