@@ -1,0 +1,35 @@
+// lib/pages.ts
+import fs from "fs"
+import path from "path"
+
+export interface Page {
+  id: string
+  title: string
+  description: string
+  powerBiUrl: string
+  spreadsheetUrl: string
+  classification: string
+}
+
+const pagesFile = path.join(process.cwd(), "data/pages.json")
+
+export const getAllPages = (): Page[] => {
+  if (!fs.existsSync(pagesFile)) return []
+  return JSON.parse(fs.readFileSync(pagesFile, "utf-8"))
+}
+
+export const createPage = (page: Page) => {
+  const pages = getAllPages()
+  pages.push(page)
+  fs.writeFileSync(pagesFile, JSON.stringify(pages, null, 2))
+}
+
+export const updatePage = (updatedPage: Page) => {
+  const pages = getAllPages().map(page => page.id === updatedPage.id ? updatedPage : page)
+  fs.writeFileSync(pagesFile, JSON.stringify(pages, null, 2))
+}
+
+export const deletePage = (id: string) => {
+  const pages = getAllPages().filter(page => page.id !== id)
+  fs.writeFileSync(pagesFile, JSON.stringify(pages, null, 2))
+}
