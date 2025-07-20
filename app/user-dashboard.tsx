@@ -158,7 +158,7 @@ export default function UserDashboard({ user, onLogout }: UserDashboardProps) {
           <div className="flex-1 p-4">
             <div
               className={`${bgPattern} rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-2 h-[calc(100vh-120px)]`}>
-            >
+            
               <div className="h-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
                 {currentPage.type === "html" && currentPage.htmlContent ? (
                   <div className="h-full overflow-auto">
@@ -318,98 +318,98 @@ export default function UserDashboard({ user, onLogout }: UserDashboardProps) {
       </header>
 
       <div className="p-6">
-      <div className="space-y-8">
-        {/* Welcome Section */}
-        <div className="text-center space-y-4 py-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg mb-4">
-            <Database className="w-8 h-8 text-white" />
+        <div className="space-y-8">
+          {/* Welcome Section */}
+          <div className="text-center space-y-4 py-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg mb-4">
+              <Database className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold text-gray-800 dark:text-white">Welcome back, {user.name}!</h1>
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              Access your personalized dashboard and explore the tools designed specifically for your workflow.
+            </p>
           </div>
-          <h1 className="text-4xl font-bold text-gray-800 dark:text-white">Welcome back, {user.name}!</h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Access your personalized dashboard and explore the tools designed specifically for your workflow.
-          </p>
-        </div>
 
-        {/* Dashboard Cards */}
-        {availablePages.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {availablePages.map((page, index) => {
-              const Icon = getPageIcon(page.type)
-              const gradient = getPageGradient(page.type)
-              return (
-                <div
-                  key={page.id}
-                  className="group cursor-pointer transform transition-all duration-300 hover:scale-105 animate-fade-in"
-                  style={{ animationDelay: `${index * 150}ms` }}
-                  onClick={() => handlePageClick(page.id)}
-                >
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 hover:shadow-xl transition-all duration-300 h-full">
-                    <div className="flex flex-col h-full">
-                      <div
-                        className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${gradient} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}
-                      >
-                        <Icon className="w-8 h-8 text-white" />
-                      </div>
-
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                          {page.title}
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">{page.content}</p>
-                        Updated: {page.updatedAt ? new Date(page.updatedAt).toLocaleDateString() : 'N/A'}
-
-                      <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
-                        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                          <span>Last updated</span>
-                          <span className="font-medium">{page.updatedAt ? new Date(page.updatedAt).toLocaleDateString() : 'N/A'}</span>
+          {/* Dashboard Cards */}
+          {availablePages.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {availablePages.map((page, index) => {
+                const Icon = getPageIcon(page.type)
+                const gradient = getPageGradient(page.type)
+                return (
+                  <div
+                    key={page.id}
+                    className="group cursor-pointer transform transition-all duration-300 hover:scale-105 animate-fade-in"
+                    style={{ animationDelay: `${index * 150}ms` }}
+                    onClick={() => handlePageClick(page.id)}
+                  >
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 hover:shadow-xl transition-all duration-300 h-full">
+                      <div className="flex flex-col h-full">
+                        <div
+                          className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${gradient} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}
+                        >
+                          <Icon className="w-8 h-8 text-white" />
                         </div>
-                        <div className="mt-3 flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
-                          <span>Open Dashboard</span>
-                          <ArrowLeft className="w-4 h-4 ml-2 rotate-180 group-hover:translate-x-1 transition-transform" />
-                        {page.createdAt ? new Date(page.createdAt).toLocaleDateString() : 'N/A'}
+
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            {page.title}
+                          </h3>
+                          <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">{page.content}</p>
+
+                          <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                              <span>Last updated</span>
+                              <span className="font-medium">{page.updatedAt ? new Date(page.updatedAt).toLocaleDateString() : 'N/A'}</span>
+                            </div>
+                            <div className="mt-3 flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
+                              <span>Open Dashboard</span>
+                              <ArrowLeft className="w-4 h-4 ml-2 rotate-180 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Database className="w-10 h-10 text-gray-400" />
+                )
+              })}
             </div>
-            <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">No Pages Assigned</h3>
-            <p className="text-gray-600 dark:text-gray-300 max-w-md mx-auto">
-              Contact your administrator to get access to dashboard pages and start exploring your data.
-            </p>
-          </div>
-        )}
+          ) : (
+            <div className="text-center py-16">
+              <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Database className="w-10 h-10 text-gray-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">No Pages Assigned</h3>
+              <p className="text-gray-600 dark:text-gray-300 max-w-md mx-auto">
+                Contact your administrator to get access to dashboard pages and start exploring your data.
+              </p>
+            </div>
+          )}
 
-        {/* Quick Stats */}
-        {availablePages.length > 0 && (
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl p-8 border border-gray-200 dark:border-gray-700">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-              <div>
-                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">{availablePages.length}</div>
-                <div className="text-gray-600 dark:text-gray-400">Available Dashboards</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
-                  {availablePages.filter((p) => p.isActive).length}
+          {/* Quick Stats */}
+          {availablePages.length > 0 && (
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl p-8 border border-gray-200 dark:border-gray-700">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                <div>
+                  <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">{availablePages.length}</div>
+                  <div className="text-gray-600 dark:text-gray-400">Available Dashboards</div>
                 </div>
-                <div className="text-gray-600 dark:text-gray-400">Active Pages</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
-                  {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : "Today"}
+                <div>
+                  <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                    {availablePages.filter((p) => p.isActive).length}
+                  </div>
+                  <div className="text-gray-600 dark:text-gray-400">Active Pages</div>
                 </div>
-                <div className="text-gray-600 dark:text-gray-400">Last Access</div>
+                <div>
+                  <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
+                    {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : "Today"}
+                  </div>
+                  <div className="text-gray-600 dark:text-gray-400">Last Access</div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
       </div>
 
       <BottomNavigation
