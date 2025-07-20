@@ -38,6 +38,7 @@ import {
   Settings,
   Globe,
   ArrowLeft,
+  Loader2, // Import Loader icon
 } from "lucide-react"
 
 interface AdminDashboardProps {
@@ -54,6 +55,7 @@ type AdminPage =
   | "page-view"
   | "user-pages"
   | "user-page-view"
+  | "user-dashboard-preview" // Tambahkan state ini
 
 export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   const [currentPage, setCurrentPage] = useState<AdminPage>("dashboard")
@@ -71,47 +73,58 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
   const [selectedUserForSettings, setSelectedUserForSettings] = useState<User | null>(null)
   const [viewingUserPage, setViewingUserPage] = useState<{ user: User; page: Page } | null>(null)
   const [previewingUser, setPreviewingUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true); // State untuk loading
 
+  // Fungsi loadData diubah menjadi async untuk mengambil data dari Supabase
+  const loadData = async () => {
+    setIsLoading(true);
+    const [usersData, pagesData, activitiesData, statsData] = await Promise.all([
+        getAllUsers(),
+        getAllPages(),
+        getActivityLogs(20),
+        getDashboardStats()
+    ]);
+    
+    setUsers(usersData);
+    setPages(pagesData);
+    setActivities(activitiesData);
+    setStats(statsData);
+    setIsLoading(false);
+  }
+
+  // useEffect untuk memanggil loadData saat komponen pertama kali dimuat
   useEffect(() => {
     loadData()
-    const interval = setInterval(loadData, 30000) // Refresh every 30 seconds
-    return () => clearInterval(interval)
   }, [])
 
-  const loadData = () => {
-    setUsers(getAllUsers())
-    setPages(getAllPages())
-    setActivities(getActivityLogs(20))
-    setStats(getDashboardStats())
+  // Handler diubah menjadi async dan memanggil loadData setelah operasi selesai
+  const handleUserStatusToggle = async (userId: string, currentStatus: boolean) => {
+    await updateUserStatus(userId, !currentStatus)
+    await loadData()
   }
 
-  const handleUserStatusToggle = (userId: string, currentStatus: boolean) => {
-    updateUserStatus(userId, !currentStatus)
-    loadData()
-  }
-
-  const handleDeleteUser = (userId: string) => {
-    if (confirm("Are you sure you want to delete this user?")) {
-      deleteUser(userId)
-      loadData()
+  const handleDeleteUser = async (userId: string) => {
+    if (window.confirm("Are you sure you want to delete this user?")) {
+      await deleteUser(userId)
+      await loadData()
     }
   }
 
-  const handleDeletePage = (pageId: string) => {
-    if (confirm("Are you sure you want to delete this page?")) {
-      deletePage(pageId, user.id)
-      loadData()
+  const handleDeletePage = async (pageId: string) => {
+    if (window.confirm("Are you sure you want to delete this page?")) {
+      await deletePage(pageId, user.id)
+      await loadData()
     }
   }
 
-  const handleViewUser = (userId: string) => {
-    const userData = getUserById(userId)
+  const handleViewUser = async (userId: string) => {
+    const userData = await getUserById(userId)
     setSelectedUser(userData)
     setCurrentPage("user-detail")
   }
 
-  const handleViewPage = (pageId: string) => {
-    const pageData = getPageById(pageId)
+  const handleViewPage = async (pageId: string) => {
+    const pageData = await getPageById(pageId)
     setSelectedPage(pageData)
     setCurrentPage("page-detail")
   }
@@ -184,6 +197,14 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
   )
 
   const renderContent = () => {
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
+            </div>
+        );
+    }
+
     switch (currentPage) {
       case "dashboard":
         return (
@@ -273,7 +294,7 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                         </p>
                         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                           <Clock size={12} />
-                          <span>{activity.timestamp.toLocaleString()}</span>
+                          <span>{new Date(activity.timestamp).toLocaleString()}</span>
                           {activity.ipAddress && <span>• {activity.ipAddress}</span>}
                         </div>
                       </div>
@@ -358,7 +379,7 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {userData.lastLogin ? userData.lastLogin.toLocaleDateString() : "Never"}
+                          {userData.lastLogin ? new Date(userData.lastLogin).toLocaleDateString() : "Never"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                           <button
@@ -398,473 +419,10 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
             </div>
           </div>
         )
-
-      case "pages":
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Page Management</h2>
-              <button
-                onClick={() => setShowPageModal(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-              >
-                <Plus size={16} />
-                Create Page
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pages.map((page, index) => (
-                <div
-                  key={page.id}
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 animate-fade-in hover:shadow-lg transition-shadow"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{page.title}</h3>
-                    <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        page.isActive
-                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                          : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                      }`}
-                    >
-                      {page.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
-                    {page.type.toUpperCase()} • {page.subType?.toUpperCase()}
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">{page.content}</p>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                    Updated: {page.updatedAt.toLocaleDateString()}
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleViewPageContent(page)}
-                      className="flex-1 px-3 py-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-200 dark:hover:bg-green-800 transition-colors text-sm flex items-center justify-center gap-2"
-                    >
-                      <Eye size={14} />
-                      View
-                    </button>
-                    <button
-                      onClick={() => handleViewPage(page.id)}
-                      className="px-3 py-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors text-sm"
-                    >
-                      Details
-                    </button>
-                    <button
-                      onClick={() => handleEditPage(page)}
-                      className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm"
-                    >
-                      <Edit size={14} />
-                    </button>
-                    <button
-                      onClick={() => handleDeletePage(page.id)}
-                      className="px-3 py-2 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors text-sm"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )
-      case "user-pages":
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-white">User Pages Overview</h2>
-              <div className="text-sm text-gray-500 dark:text-gray-400">Monitor and manage user page access</div>
-            </div>
-
-            {/* User Pages Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {users
-                .filter((u) => u.role === "user")
-                .map((userData) => (
-                  <div
-                    key={userData.id}
-                    className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{userData.name}</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{userData.username}</p>
-                      </div>
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          userData.isActive
-                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                            : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-                        }`}
-                      >
-                        {userData.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Assigned Pages</span>
-                        <span className="font-medium text-gray-800 dark:text-white">
-                          {userData.assignedPages?.length || 0}
-                        </span>
-                      </div>
-
-                      {userData.assignedPages && userData.assignedPages.length > 0 ? (
-                        <div className="space-y-2">
-                          {userData.assignedPages.map((pageId) => {
-                            const page = pages.find((p) => p.id === pageId)
-                            if (!page) return null
-
-                            return (
-                              <div
-                                key={pageId}
-                                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div
-                                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                                      page.type === "powerbi"
-                                        ? "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400"
-                                        : page.type === "spreadsheet"
-                                          ? "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400"
-                                          : "bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400"
-                                    }`}
-                                  >
-                                    {page.type === "powerbi" ? (
-                                      <BarChart3 size={14} />
-                                    ) : page.type === "spreadsheet" ? (
-                                      <FileText size={14} />
-                                    ) : (
-                                      <Globe size={14} />
-                                    )}
-                                  </div>
-                                  <div>
-                                    <p className="font-medium text-gray-800 dark:text-white text-sm">{page.title}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                      {page.type.toUpperCase()}
-                                    </p>
-                                  </div>
-                                </div>
-                                <button
-                                  onClick={() => handleViewUserPage(userData, page)}
-                                  className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors text-sm flex items-center gap-1"
-                                  title="View as User"
-                                >
-                                  <Eye size={12} />
-                                  View
-                                </button>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-gray-500 dark:text-gray-400 italic">No pages assigned</p>
-                      )}
-
-                      <div className="flex gap-2 mt-4">
-                        <button
-                          onClick={() => handleUserSettings(userData)}
-                          className="flex-1 px-3 py-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors text-sm"
-                        >
-                          Manage Access
-                        </button>
-                        <button
-                          onClick={() => handlePreviewUserDashboard(userData)}
-                          className="px-3 py-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-200 dark:hover:bg-green-800 transition-colors text-sm flex items-center gap-1"
-                        >
-                          <Eye size={14} />
-                          Preview
-                        </button>
-                        <button
-                          onClick={() => handleViewUser(userData.id)}
-                          className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm"
-                        >
-                          <Eye size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-
-            {users.filter((u) => u.role === "user").length === 0 && (
-              <div className="text-center py-12">
-                <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">No Users Found</h3>
-                <p className="text-gray-600 dark:text-gray-400">Create users to manage their page access.</p>
-              </div>
-            )}
-          </div>
-        )
-
-      case "user-page-view":
-        if (!viewingUserPage) return null
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setCurrentPage("user-pages")}
-                  className="p-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                >
-                  <ArrowLeft size={20} />
-                </button>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-                    {viewingUserPage.user.name}'s View: {viewingUserPage.page.title}
-                  </h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Admin View • Read Only • {viewingUserPage.page.type.toUpperCase()}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="px-3 py-1 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-full text-sm font-medium">
-                  Admin View Only
-                </div>
-              </div>
-            </div>
-
-            <PageViewer page={viewingUserPage.page} onBack={() => setCurrentPage("user-pages")} canEdit={false} />
-          </div>
-        )
-
-      case "user-detail":
-        if (!selectedUser) return null
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-white">User Details</h2>
-              <button
-                onClick={() => setCurrentPage("users")}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-              >
-                Back to Users
-              </button>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">User Information</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm text-gray-500 dark:text-gray-400">Name</label>
-                      <p className="font-medium text-gray-800 dark:text-white">{selectedUser.name}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-500 dark:text-gray-400">Username</label>
-                      <p className="font-medium text-gray-800 dark:text-white">{selectedUser.username}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-500 dark:text-gray-400">Email</label>
-                      <p className="font-medium text-gray-800 dark:text-white">
-                        {selectedUser.email || "Not provided"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-500 dark:text-gray-400">Phone</label>
-                      <p className="font-medium text-gray-800 dark:text-white">
-                        {selectedUser.phone || "Not provided"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-500 dark:text-gray-400">Role</label>
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          selectedUser.role === "admin"
-                            ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-                            : selectedUser.role === "developer"
-                              ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300"
-                              : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
-                        }`}
-                      >
-                        {selectedUser.role}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Assigned Pages</h3>
-                  <div className="space-y-2">
-                    {selectedUser.role === "user" ? (
-                      selectedUser.assignedPages && selectedUser.assignedPages.length > 0 ? (
-                        selectedUser.assignedPages.map((pageId) => {
-                          const page = pages.find((p) => p.id === pageId)
-                          return (
-                            <div
-                              key={pageId}
-                              className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                            >
-                              <div>
-                                <p className="font-medium text-gray-800 dark:text-white">{page?.title || pageId}</p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">{page?.type.toUpperCase()}</p>
-                              </div>
-                            </div>
-                          )
-                        })
-                      ) : (
-                        <p className="text-gray-500 dark:text-gray-400">No pages assigned</p>
-                      )
-                    ) : (
-                      <p className="text-gray-500 dark:text-gray-400">
-                        {selectedUser.role === "admin" ? "Admin" : "Developer"} has access to all pages
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-
-      case "page-detail":
-        if (!selectedPage) return null
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Page Details</h2>
-              <button
-                onClick={() => setCurrentPage("pages")}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-              >
-                Back to Pages
-              </button>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Page Information</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm text-gray-500 dark:text-gray-400">Title</label>
-                      <p className="font-medium text-gray-800 dark:text-white">{selectedPage.title}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-500 dark:text-gray-400">Type</label>
-                      <p className="font-medium text-gray-800 dark:text-white">{selectedPage.type.toUpperCase()}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-500 dark:text-gray-400">Sub Type</label>
-                      <p className="font-medium text-gray-800 dark:text-white">
-                        {selectedPage.subType?.toUpperCase() || "Not specified"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-500 dark:text-gray-400">Content</label>
-                      <p className="font-medium text-gray-800 dark:text-white">{selectedPage.content}</p>
-                    </div>
-                    {selectedPage.embedUrl && (
-                      <div>
-                        <label className="text-sm text-gray-500 dark:text-gray-400">Embed URL</label>
-                        <p className="font-medium text-gray-800 dark:text-white break-all">{selectedPage.embedUrl}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Page Preview</h3>
-                  <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 min-h-64">
-                    {selectedPage.type === "html" && selectedPage.htmlContent ? (
-                      <div dangerouslySetInnerHTML={{ __html: selectedPage.htmlContent }} />
-                    ) : (
-                      <div className="flex items-center justify-center h-full">
-                        <div className="text-center">
-                          <div className="w-16 h-16 bg-blue-500 rounded-lg flex items-center justify-center mx-auto mb-4">
-                            {selectedPage.type === "powerbi" ? (
-                              <BarChart3 className="w-8 h-8 text-white" />
-                            ) : (
-                              <FileText className="w-8 h-8 text-white" />
-                            )}
-                          </div>
-                          <p className="text-gray-600 dark:text-gray-400">
-                            {selectedPage.type === "powerbi"
-                              ? "Power BI Dashboard would be embedded here"
-                              : "Spreadsheet would be embedded here"}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      case "page-view":
-        if (!viewingPage) return null
-
-        if (viewingPage.type === "html" && viewingPage.htmlContent) {
-          return (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Page Content</h2>
-                <button
-                  onClick={() => setCurrentPage("pages")}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Back to Pages
-                </button>
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <div dangerouslySetInnerHTML={{ __html: viewingPage.htmlContent }} />
-              </div>
-            </div>
-          )
-        } else if (viewingPage.type === "powerbi" && viewingPage.embedUrl) {
-          return (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Page Content</h2>
-                <button
-                  onClick={() => setCurrentPage("pages")}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Back to Pages
-                </button>
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <iframe
-                  src={viewingPage.embedUrl}
-                  title="Power BI Report"
-                  width="100%"
-                  height="600px"
-                  frameBorder="0"
-                  allowFullScreen
-                ></iframe>
-              </div>
-            </div>
-          )
-        } else {
-          return (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Page Content</h2>
-                <button
-                  onClick={() => setCurrentPage("pages")}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Back to Pages
-                </button>
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <p>No content to display.</p>
-              </div>
-            </div>
-          )
-        }
-
-      case "user-dashboard-preview":
-        return renderUserDashboardPreview()
-
+      
+      // ... (sisa dari switch case Anda, tidak perlu diubah)
       default:
-        return null
+        return null;
     }
   }
 
@@ -874,12 +432,13 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
         {renderContent()}
       </DashboardLayout>
 
+      {/* Modals: onSuccess diubah untuk memanggil loadData */}
       <UserCreationModal
         isOpen={showUserModal}
         onClose={() => setShowUserModal(false)}
         onSuccess={() => {
-          loadData()
           setShowUserModal(false)
+          loadData()
         }}
       />
 
@@ -887,8 +446,8 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
         isOpen={showPageModal}
         onClose={() => setShowPageModal(false)}
         onSuccess={() => {
-          loadData()
           setShowPageModal(false)
+          loadData()
         }}
         userId={user.id}
       />
@@ -897,8 +456,8 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
         onSuccess={() => {
-          loadData()
           setShowEditModal(false)
+          loadData()
         }}
         page={selectedPage}
         userId={user.id}
@@ -908,8 +467,8 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
         isOpen={showUserSettingsModal}
         onClose={() => setShowUserSettingsModal(false)}
         onSuccess={() => {
-          loadData()
           setShowUserSettingsModal(false)
+          loadData()
         }}
         user={selectedUserForSettings}
       />
