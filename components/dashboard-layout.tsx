@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react"
 import { LogOut, Menu, X, Settings, Sun, Moon } from "lucide-react"
-import type { AuthUser } from "@/lib/auth"
+import type { User as AuthUser } from "@/lib/auth"
 import { DynamicBottomNavigation } from "@/components/dynamic-bottom-navigation"
 
 interface DashboardLayoutProps {

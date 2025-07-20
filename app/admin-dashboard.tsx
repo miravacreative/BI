@@ -265,7 +265,7 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                     <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                       <TrendingUp size={14} />
                       <span>{stat.change}</span>
-                    </div>
+                    Updated: {page.updatedAt ? new Date(page.updatedAt).toLocaleDateString() : 'N/A'}
                   </div>
                 )
               })}
@@ -366,10 +366,131 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
             </div>
           </div>
         )
+
+      case "user-detail":
+        if (!selectedUser) return null
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setCurrentPage("users")}
+                className="p-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">User Details</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Viewing user information</p>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">{selectedUser.name}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Username</p>
+                  <p className="font-medium text-gray-800 dark:text-white">{selectedUser.username}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Role</p>
+                  <p className="font-medium text-gray-800 dark:text-white">{selectedUser.role}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
+                  <p className="font-medium text-gray-800 dark:text-white">{selectedUser.email || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Phone</p>
+                  <p className="font-medium text-gray-800 dark:text-white">{selectedUser.phone || 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+
+      case "page-detail":
+        if (!selectedPage) return null
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setCurrentPage("pages")}
+                className="p-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Page Details</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Viewing page information</p>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">{selectedPage.title}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Type</p>
+                  <p className="font-medium text-gray-800 dark:text-white">{selectedPage.type}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Sub Type</p>
+                  <p className="font-medium text-gray-800 dark:text-white">{selectedPage.subType || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
+                  <p className="font-medium text-gray-800 dark:text-white">{selectedPage.isActive ? 'Active' : 'Inactive'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Created</p>
+                  <p className="font-medium text-gray-800 dark:text-white">{selectedPage.createdAt ? new Date(selectedPage.createdAt).toLocaleDateString() : 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+
+      case "page-view":
+        if (!viewingPage) return null
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setCurrentPage("pages")}
+                className="p-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Viewing: {viewingPage.title}</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Page content preview</p>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <div className="min-h-96">
+                {viewingPage.type === "html" && viewingPage.htmlContent ? (
+                  <div dangerouslySetInnerHTML={{ __html: viewingPage.htmlContent }} />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-500 dark:text-gray-400">Content preview not available</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+
+      case "user-pages":
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white">User Pages</h2>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <p className="text-gray-600 dark:text-gray-400">User pages management interface</p>
+            </div>
+          </div>
+        )
       
-      // ... (sisa dari switch case Anda, tidak perlu diubah)
       default:
-        return null;
+        return null
     }
   }
 

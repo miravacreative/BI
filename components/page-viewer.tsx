@@ -143,8 +143,7 @@ export function PageViewer({ page, onBack, onEdit, canEdit = false }: PageViewer
           <div>
             <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Viewing: {page.title}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {page.type.toUpperCase()} • {page.subType?.toUpperCase()} • Last updated:{" "}
-              {page.updatedAt.toLocaleDateString()}
+              {page.type.toUpperCase()} • {page.subType?.toUpperCase()} • Last updated: {page.updatedAt ? new Date(page.updatedAt).toLocaleDateString() : 'N/A'}
             </p>
           </div>
         </div>
@@ -169,7 +168,7 @@ export function PageViewer({ page, onBack, onEdit, canEdit = false }: PageViewer
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">Created</p>
-            <p className="font-medium text-gray-800 dark:text-white">{page.createdAt.toLocaleDateString()}</p>
+            <p className="font-medium text-gray-800 dark:text-white">{page.createdAt ? new Date(page.createdAt).toLocaleDateString() : 'N/A'}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>

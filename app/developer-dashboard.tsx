@@ -496,7 +496,7 @@ export default function DeveloperDashboard({ user, onLogout }: DeveloperDashboar
                       </p>
                       <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">{page.content}</p>
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                        Updated: {new Date(page.updatedAt).toLocaleDateString()}
+                        Updated: {page.updatedAt ? new Date(page.updatedAt).toLocaleDateString() : 'N/A'}
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <button
@@ -542,9 +542,8 @@ export default function DeveloperDashboard({ user, onLogout }: DeveloperDashboar
               </div>
             )
     
-          // ... (sisa dari switch case Anda)
           default:
-            return null;
+            return null
     }
   }
 

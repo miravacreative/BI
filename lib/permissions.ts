@@ -11,6 +11,8 @@ export interface Role {
   name: string
   permissions: string[]
   description: string
+  isSystem?: boolean
+  createdAt?: Date
 }
 
 // Define all available permissions
@@ -47,6 +49,8 @@ export const ROLES: Role[] = [
     id: "admin",
     name: "Administrator",
     description: "Full system access with all permissions",
+    isSystem: true,
+    createdAt: new Date(),
     permissions: [
       "users.view",
       "users.create",
@@ -66,6 +70,8 @@ export const ROLES: Role[] = [
     id: "developer",
     name: "Developer",
     description: "Development access with user and page management",
+    isSystem: true,
+    createdAt: new Date(),
     permissions: [
       "users.view",
       "users.create",
@@ -82,12 +88,16 @@ export const ROLES: Role[] = [
     id: "editor",
     name: "Content Editor",
     description: "Content editing access for assigned pages",
+    isSystem: true,
+    createdAt: new Date(),
     permissions: ["pages.view", "pages.edit"],
   },
   {
     id: "user",
     name: "Standard User",
     description: "View-only access to assigned pages",
+    isSystem: true,
+    createdAt: new Date(),
     permissions: ["pages.view"],
   },
 ]
@@ -124,5 +134,38 @@ export class PermissionManager {
     }
 
     return pageRequiredPermissions.every((permission) => this.hasPermission(userRole, permission))
+  }
+
+  static getPermissionsByCategory(): Record<string, Permission[]> {
+    const categories: Record<string, Permission[]> = {}
+    
+    PERMISSIONS.forEach(permission => {
+      if (!categories[permission.category]) {
+        categories[permission.category] = []
+      }
+      categories[permission.category].push(permission)
+    })
+    
+    return categories
+  }
+
+  static createRole(roleData: Omit<Role, 'id' | 'createdAt'>): Role {
+    const newRole: Role = {
+      ...roleData,
+      id: `custom_${Date.now()}`,
+      createdAt: new Date(),
+      isSystem: false,
+    }
+    return newRole
+  }
+
+  static updateRole(roleId: string, updates: Partial<Role>): boolean {
+    // In a real implementation, this would update the database
+    return true
+  }
+
+  static deleteRole(roleId: string): boolean {
+    // In a real implementation, this would delete from database
+    return true
   }
 }

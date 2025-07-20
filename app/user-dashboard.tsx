@@ -356,17 +356,17 @@ export default function UserDashboard({ user, onLogout }: UserDashboardProps) {
                           {page.title}
                         </h3>
                         <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">{page.content}</p>
-                      </div>
+                        Updated: {page.updatedAt ? new Date(page.updatedAt).toLocaleDateString() : 'N/A'}
 
                       <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
                         <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                           <span>Last updated</span>
-                          <span className="font-medium">{page.updatedAt.toLocaleDateString()}</span>
+                          <span className="font-medium">{page.updatedAt ? new Date(page.updatedAt).toLocaleDateString() : 'N/A'}</span>
                         </div>
                         <div className="mt-3 flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
                           <span>Open Dashboard</span>
                           <ArrowLeft className="w-4 h-4 ml-2 rotate-180 group-hover:translate-x-1 transition-transform" />
-                        </div>
+                        {page.createdAt ? new Date(page.createdAt).toLocaleDateString() : 'N/A'}
                       </div>
                     </div>
                   </div>

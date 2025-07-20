@@ -26,9 +26,7 @@ export default function HomePage() {
 
   // Load saved data on component mount
   useEffect(() => {
-    // This will trigger the localStorage loading in auth functions
     if (typeof window !== 'undefined') {
-      // Force load saved data
       getAllUsers()
       getAllPages()
     }
