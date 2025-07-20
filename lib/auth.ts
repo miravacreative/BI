@@ -154,17 +154,13 @@ export const updateUserPassword = async (userId: string, newPassword: string): P
 };
 
 export const getAllUsers = async (): Promise<User[]> => {
-  try {
   const { data, error } = await supabase.from('users').select('*');
   if (error) {
     console.error("Error fetching users:", error);
     return [];
   }
-  return (data || []).map(({ password, ...user }) => user);
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    return [];
-  }
+  // Menghapus properti password dari setiap objek user
+  return data.map(({ password, ...user }) => user);
 };
 
 export const updateUser = async (userId: string, updates: Partial<User>): Promise<boolean> => {
@@ -264,21 +260,16 @@ export const deletePage = async (pageId: string, userId: string): Promise<boolea
 // --- LOG AKTIVITAS ---
 
 export const logActivity = async (userId: string, action: string, details: string): Promise<void> => {
-  try {
     const activity: Omit<ActivityLog, 'id' | 'timestamp'> = {
         userId,
         action,
         details,
-        ipAddress: "127.0.0.1",
+        ipAddress: "127.0.0.1", // Bisa diganti dengan IP asli jika di server
     };
-    await supabase.from('activity_logs').insert([activity]);
-  } catch (error) {
-    console.error('Error logging activity:', error);
-  }
+    await supabase.from('activity_logs').insert([activity]); // Ganti 'activity_logs' dengan nama tabel Anda
 };
 
 export const getActivityLogs = async (limit = 50): Promise<ActivityLog[]> => {
-  try {
     const { data, error } = await supabase
         .from('activity_logs')
         .select('*')
@@ -288,11 +279,7 @@ export const getActivityLogs = async (limit = 50): Promise<ActivityLog[]> => {
     if (error) {
         return [];
     }
-    return data || [];
-  } catch (error) {
-    console.error("Error fetching activity logs:", error);
-    return [];
-  }
+    return data;
 };
 
 // --- STATISTIK ---
