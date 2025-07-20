@@ -264,13 +264,17 @@ export const deletePage = async (pageId: string, userId: string): Promise<boolea
 // --- LOG AKTIVITAS ---
 
 export const logActivity = async (userId: string, action: string, details: string): Promise<void> => {
+  try {
     const activity: Omit<ActivityLog, 'id' | 'timestamp'> = {
         userId,
         action,
         details,
-        ipAddress: "127.0.0.1", // Bisa diganti dengan IP asli jika di server
+        ipAddress: "127.0.0.1",
     };
-    await supabase.from('activity_logs').insert([activity]); // Ganti 'activity_logs' dengan nama tabel Anda
+    await supabase.from('activity_logs').insert([activity]);
+  } catch (error) {
+    console.error('Error logging activity:', error);
+  }
 };
 
 export const getActivityLogs = async (limit = 50): Promise<ActivityLog[]> => {
