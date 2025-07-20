@@ -68,6 +68,10 @@ export const authenticate = async (username: string, password: string): Promise<
 
   const { password: _, ...userWithoutPassword } = data;
   return userWithoutPassword;
+  } catch (error) {
+    console.error('Authentication error:', error);
+    return null;
+  }
 };
 
 export const getUserByPhone = async (phone: string): Promise<(User & { password: string }) | null> => {
@@ -86,7 +90,7 @@ export const getUserByPhone = async (phone: string): Promise<(User & { password:
     console.error('Error getting user by phone:', error);
     return null;
   }
-}
+};
 
 // --- MANAJEMEN PENGGUNA ---
 
@@ -107,7 +111,7 @@ export const registerUser = async (userData: {
 
     const { error } = await supabase.from('users').insert([newUser]);
 
-      .from('users')
+    if (error) {
         console.error('Registration error:', error);
         return false;
     }
@@ -147,35 +151,16 @@ export const updateUserPassword = async (userId: string, newPassword: string): P
     }
     await logActivity(userId, "password_change", `Password changed for user ID ${userId}`);
     return true;
-}
+};
 
 export const getAllUsers = async (): Promise<User[]> => {
-  try {
   const { data, error } = await supabase.from('users').select('*');
   if (error) {
     console.error("Error fetching users:", error);
     return [];
   }
-  return (data || []).map(({ password, ...user }) => user);
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    return [];
-  }
-};
-
-    await supabase
-      .from('users')
-      .update({ lastLogin: new Date().toISOString() })
-      .eq('id', data.id);
-    if (error || !data) {
-        return null;
-    }
-    const { password, ...userWithoutPassword } = data;
-    return userWithoutPassword;
-  } catch (error) {
-    console.error('Authentication error:', error);
-    return null;
-  }
+  // Menghapus properti password dari setiap objek user
+  return data.map(({ password, ...user }) => user);
 };
 
 export const updateUser = async (userId: string, updates: Partial<User>): Promise<boolean> => {
@@ -220,17 +205,12 @@ export const assignPagesToUser = async (userId: string, pageIds: string[]): Prom
 // --- MANAJEMEN HALAMAN (PAGES) ---
 
 export const getAllPages = async (): Promise<Page[]> => {
-  try {
-    const { data, error } = await supabase.from('pages').select('*');
+    const { data, error } = await supabase.from('pages').select('*'); // Ganti 'pages' dengan nama tabel halaman Anda
     if (error) {
         console.error("Error fetching pages:", error);
         return [];
     }
-    return data || [];
-  } catch (error) {
-    console.error("Error fetching pages:", error);
-    return [];
-  }
+    return data;
 };
 
 export const getPageById = async (id: string): Promise<Page | null> => {
@@ -262,7 +242,7 @@ export const updatePage = async (pageId: string, updates: Partial<Page>): Promis
 };
 
 export const deletePage = async (pageId: string, userId: string): Promise<boolean> => {
-    const { data: pageData } = await getPageById(pageId); // Ambil data halaman dulu untuk log
+    const pageData = await getPageById(pageId); // Ambil data halaman dulu untuk log
     const { error } = await supabase.from('pages').delete().eq('id', pageId);
     if (error) {
         console.error('Error deleting page:', error);
@@ -275,21 +255,16 @@ export const deletePage = async (pageId: string, userId: string): Promise<boolea
 // --- LOG AKTIVITAS ---
 
 export const logActivity = async (userId: string, action: string, details: string): Promise<void> => {
-  try {
     const activity: Omit<ActivityLog, 'id' | 'timestamp'> = {
         userId,
         action,
         details,
-        ipAddress: "127.0.0.1",
+        ipAddress: "127.0.0.1", // Bisa diganti dengan IP asli jika di server
     };
-    await supabase.from('activity_logs').insert([activity]);
-  } catch (error) {
-    console.error('Error logging activity:', error);
-  }
+    await supabase.from('activity_logs').insert([activity]); // Ganti 'activity_logs' dengan nama tabel Anda
 };
 
 export const getActivityLogs = async (limit = 50): Promise<ActivityLog[]> => {
-  try {
     const { data, error } = await supabase
         .from('activity_logs')
         .select('*')
@@ -299,45 +274,30 @@ export const getActivityLogs = async (limit = 50): Promise<ActivityLog[]> => {
     if (error) {
         return [];
     }
-    return data || [];
-  } catch (error) {
-    console.error("Error fetching activity logs:", error);
-    return [];
-  }
+    return data;
 };
 
 // --- STATISTIK ---
 
 export const getDashboardStats = async () => {
-  try {
+    // Fungsi ini memerlukan beberapa query terpisah
     const { count: totalUsers } = await supabase.from('users').select('*', { count: 'exact', head: true });
     const { count: activeUsers } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('isActive', true);
     const { count: totalPages } = await supabase.from('pages').select('*', { count: 'exact', head: true });
     const { count: activePages } = await supabase.from('pages').select('*', { count: 'exact', head: true }).eq('isActive', true);
     
+    // Statistik lainnya bisa ditambahkan sesuai kebutuhan
     return {
         totalUsers: totalUsers ?? 0,
         activeUsers: activeUsers ?? 0,
         totalPages: totalPages ?? 0,
         activePages: activePages ?? 0,
+        // Properti lain bisa di-hardcode atau dihitung jika ada datanya
         dailyTraffic: 0, 
         monthlyTraffic: 0,
         recentRegistrations: 0,
         lastActivity: new Date(),
     };
-  } catch (error) {
-    console.error("Error fetching dashboard stats:", error);
-    return {
-      totalUsers: 0,
-      activeUsers: 0,
-      totalPages: 0,
-      activePages: 0,
-      dailyTraffic: 0,
-      monthlyTraffic: 0,
-      recentRegistrations: 0,
-      lastActivity: new Date(),
-    };
-  }
 };
 
 // --- DATA STATIS ---
