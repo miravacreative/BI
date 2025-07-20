@@ -1,530 +1,299 @@
+import { supabase } from './supabaseClient';
+
+// Interface Anda tetap sama
 export interface User {
-  id: string
-  username: string
-  role: "user" | "admin" | "developer"
-  name: string
-  phone?: string
-  email?: string
-  assignedPages?: string[]
-  createdAt: Date
-  lastLogin?: Date
-  isActive: boolean
+  id: string;
+  username: string;
+  role: "user" | "admin" | "developer";
+  name: string;
+  phone?: string;
+  email?: string;
+  assignedPages?: string[];
+  createdAt: Date;
+  lastLogin?: Date;
+  isActive: boolean;
+  password?: string; // Tambahkan ini untuk proses insert, tapi akan dihapus saat pengambilan data
 }
 
-export type AuthUser = User
+export type AuthUser = Omit<User, 'password'>;
 
 export interface Page {
-  id: string
-  title: string
-  type: "powerbi" | "spreadsheet" | "html"
-  subType?: "dashboard" | "report" | "analytics" | "custom"
-  content: string
-  embedUrl?: string
-  htmlContent?: string
-  createdAt: Date
-  updatedAt: Date
-  createdBy: string
-  isActive: boolean
-  allowedRoles?: string[]
+  id: string;
+  title: string;
+  type: "powerbi" | "spreadsheet" | "html";
+  subType?: "dashboard" | "report" | "analytics" | "custom";
+  content: string;
+  embedUrl?: string;
+  htmlContent?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+  isActive: boolean;
+  allowedRoles?: string[];
 }
 
 export interface ActivityLog {
-  id: string
-  userId: string
-  action: string
-  details: string
-  timestamp: Date
-  ipAddress?: string
+  id: string;
+  userId: string;
+  action: string;
+  details: string;
+  timestamp: Date;
+  ipAddress?: string;
 }
 
-export interface AuthState {
-  user: User | null
-  isAuthenticated: boolean
-}
+// --- FUNGSI AUTENTIKASI ---
+export const authenticate = async (username: string, password: string): Promise<User | null> => {
+  // PERINGATAN: Menyimpan password sebagai teks biasa sangat tidak aman.
+  // Sebaiknya gunakan sistem Otentikasi bawaan Supabase (supabase.auth.signInWithPassword).
+  // Kode ini hanya meniru fungsionalitas Anda saat ini untuk kemudahan transisi.
+  const { data, error } = await supabase
+    .from('users') // PASTIKAN nama tabel ini 'users' atau sesuai dengan di Supabase
+    .select('*')
+    .eq('username', username)
+    .eq('password', password)
+    .single();
 
-// Mock user database with real timestamps
-const users: Record<string, User & { password: string }> = {
-  admin: {
-    id: "1",
-    username: "admin",
-    password: "admin",
-    role: "admin",
-    name: "administrator",
-    phone: "081234567890",
-    email: "ccc@jne.co.id",
-    createdAt: new Date("2024-01-01"),
-    lastLogin: new Date(),
-    isActive: true,
-   }, 
-   developer: {
-    id: "2",
-    username: "Developer",
-    password: "jnecbn09",
-    role: "developer",
-    name: "Developer-IT",
-    phone: "081234567891",
-    email: "dev@jne.com",
-    createdAt: new Date("2024-01-15"),
-    lastLogin: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-    isActive: true, 
-  },
-   user1: {
-    id: "3",
-    username: "user1",
-    password: "user123",
-    role: "user",
-    name: "Bobby",
-    phone: "081234567892",
-    email: "Bobby@example.com",
-    assignedPages: ["powerbi", "spreadsheet1"],
-    createdAt: new Date("2024-02-01"),
-    lastLogin: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-    isActive: true,
-  },
-  user2: {
-    id: "4",
-    username: "user2",
-    password: "user456",
-    role: "user",
-    name: "Ntuy",
-    phone: "081234567893",
-    email: "ntuy@example.com",
-    assignedPages: ["spreadsheet1"],
-    createdAt: new Date("2024-02-15"),
-    lastLogin: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-    isActive: false,
-  },
-}
-
-// Mock pages database
-const pages: Record<string, Page> = {
-  powerbi: {
-    id: "powerbi",
-    title: "Power BI Dashboard",
-    type: "powerbi",
-    subType: "dashboard",
-    content: "Power BI Analytics Dashboard for real-time business intelligence",
-    embedUrl: "https://app.powerbi.com/embed/sample",
-    createdAt: new Date("2024-01-10"),
-    updatedAt: new Date("2024-02-20"),
-    createdBy: "1",
-    isActive: true,
-    allowedRoles: ["admin", "developer", "user"],
-  },
-  spreadsheet1: {
-    id: "spreadsheet1",
-    title: "Sales Report",
-    type: "spreadsheet",
-    subType: "report",
-    content: "Monthly Sales Analysis and Performance Metrics",
-    embedUrl: "https://docs.google.com/spreadsheets/embed/sample1",
-    createdAt: new Date("2024-01-20"),
-    updatedAt: new Date("2024-02-25"),
-    createdBy: "2",
-    isActive: true,
-    allowedRoles: ["admin", "developer", "user"],
-  },
-  spreadsheet2: {
-    id: "spreadsheet2",
-    title: "Inventory Management",
-    type: "spreadsheet",
-    subType: "analytics",
-    content: "Real-time Inventory Tracking and Management System",
-    embedUrl: "https://docs.google.com/spreadsheets/embed/sample2",
-    createdAt: new Date("2024-02-01"),
-    updatedAt: new Date("2024-02-28"),
-    createdBy: "1",
-    isActive: true,
-    allowedRoles: ["admin", "developer"],
-  },
-  custom1: {
-    id: "custom1",
-    title: "Custom HTML Dashboard",
-    type: "html",
-    subType: "custom",
-    content: "Custom HTML dashboard with interactive elements",
-    htmlContent: `
-      <div style="padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px;">
-        <h2>Custom Dashboard</h2>
-        <p>This is a custom HTML dashboard with interactive elements.</p>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px;">
-          <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
-            <h3>Metric 1</h3>
-            <p style="font-size: 24px; font-weight: bold;">1,234</p>
-          </div>
-          <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
-            <h3>Metric 2</h3>
-            <p style="font-size: 24px; font-weight: bold;">5,678</p>
-          </div>
-          <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
-            <h3>Metric 3</h3>
-            <p style="font-size: 24px; font-weight: bold;">9,012</p>
-          </div>
-        </div>
-      </div>
-    `,
-    createdAt: new Date("2024-02-10"),
-    updatedAt: new Date("2024-02-28"),
-    createdBy: "2",
-    isActive: true,
-    allowedRoles: ["admin", "developer"],
-  },
-}
-
-// Activity logs for real tracking
-let activityLogs: ActivityLog[] = [
-  {
-    id: "1",
-    userId: "1",
-    action: "login",
-    details: "Admin logged in",
-    timestamp: new Date(),
-    ipAddress: "192.168.1.1",
-  },
-  {
-    id: "2",
-    userId: "3",
-    action: "page_view",
-    details: "Viewed Power BI Dashboard",
-    timestamp: new Date(Date.now() - 1000 * 60 * 15),
-    ipAddress: "192.168.1.2",
-  },
-  {
-    id: "3",
-    userId: "2",
-    action: "page_edit",
-    details: "Updated Sales Report spreadsheet",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60),
-    ipAddress: "192.168.1.3",
-  },
-  {
-    id: "4",
-    userId: "4",
-    action: "login",
-    details: "User logged in",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    ipAddress: "192.168.1.4",
-  },
-]
-
-export const authenticate = (username: string, password: string): User | null => {
-  const user = users[username]
-  console.log("Checking user:", user)
-
-  if (user && user.password === password) {
-    user.lastLogin = new Date()
-    logActivity(user.id, "login", `${user.name} logged in`)
-    const { password: _, ...userWithoutPassword } = user
-    return userWithoutPassword
+  if (error || !data) {
+    console.error('Authentication error:', error);
+    return null;
   }
 
-  return null
-}
-export const getUserByPhone = (phone: string): (User & { password: string }) | null => {
-  return Object.values(users).find((user) => user.phone === phone) || null
-}
+  // Update waktu login terakhir
+  await supabase.from('users').update({ lastLogin: new Date().toISOString() }).eq('id', data.id);
+  
+  await logActivity(data.id, "login", `${data.name} logged in`);
 
-export const registerUser = (userData: {
-  username: string
-  password: string
-  name: string
-  phone: string
-  email?: string
-}): boolean => {
-  if (users[userData.username]) {
-    return false
-  }
+  const { password: _, ...userWithoutPassword } = data;
+  return userWithoutPassword;
+};
 
-  const newUser = {
-    id: Date.now().toString(),
-    ...userData,
-    role: "user" as const,
-    assignedPages: [],
-    createdAt: new Date(),
-    isActive: true,
-  }
-
-  users[userData.username] = newUser
-  logActivity(newUser.id, "register", `New user ${newUser.name} registered`)
-  return true
-}
-
-export const createUser = (userData: {
-  username: string
-  password: string
-  name: string
-  phone: string
-  email: string
-  role: "user" | "admin" | "developer"
-  assignedPages?: string[]
-}): boolean => {
-  if (users[userData.username]) {
-    return false
-  }
-
-  const newUser = {
-    id: Date.now().toString(),
-    ...userData,
-    assignedPages: userData.assignedPages || [],
-    createdAt: new Date(),
-    isActive: true,
-  }
-
-  users[userData.username] = newUser
-  // Save to localStorage for persistence
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('dashboard_users', JSON.stringify(users))
-  }
-  logActivity("system", "user_create", `New user ${newUser.name} created with role ${newUser.role}`)
-  return true
-}
-
-export const updateUserPassword = (userId: string, newPassword: string): boolean => {
-  const userEntry = Object.entries(users).find(([_, user]) => user.id === userId)
-  if (userEntry) {
-    const [username, user] = userEntry
-    users[username].password = newPassword
-    // Save to localStorage for persistence
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('dashboard_users', JSON.stringify(users))
+export const getUserByPhone = async (phone: string): Promise<(User & { password: string }) | null> => {
+    const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('phone', phone)
+        .single();
+    
+    if (error || !data) {
+        return null;
     }
-    logActivity(userId, "password_change", `Password changed for user ${user.name}`)
-    return true
-  }
-  return false
+    return data;
 }
 
-export const getAllUsers = (): User[] => {
-  // Load from localStorage if available
-  if (typeof window !== 'undefined') {
-    const savedUsers = localStorage.getItem('dashboard_users')
-    if (savedUsers) {
-      const parsedUsers = JSON.parse(savedUsers)
-//
-      Object.values(parsedUsers).forEach((user: any) => {
-        if (user.createdAt) user.createdAt = new Date(user.createdAt)
-        if (user.lastLogin) user.lastLogin = new Date(user.lastLogin)
-      })
+// --- MANAJEMEN PENGGUNA ---
 
-      Object.assign(users, parsedUsers)
+export const registerUser = async (userData: {
+  username: string;
+  password: string;
+  name: string;
+  phone: string;
+  email?: string;
+}): Promise<boolean> => {
+    const newUser = {
+        ...userData,
+        role: "user" as const,
+        assignedPages: [],
+        isActive: true,
+    };
+
+    const { error } = await supabase.from('users').insert([newUser]);
+
+    if (error) {
+        console.error('Registration error:', error);
+        return false;
     }
-  }
-
-  return Object.values(users).map(({ password, ...user }) => user)
-}
-
-
-export const getUserById = (id: string): User | null => {
-  if (typeof window !== 'undefined') {
-    const savedUsers = localStorage.getItem('dashboard_users')
-    if (savedUsers) {
-      const parsedUsers = JSON.parse(savedUsers)
-      Object.keys(parsedUsers).forEach((key) => {
-        const u = parsedUsers[key]
-        u.createdAt = new Date(u.createdAt)
-        if (u.lastLogin) u.lastLogin = new Date(u.lastLogin)
-      })
-      Object.assign(users, parsedUsers)
+    
+    // Ambil user yang baru dibuat untuk mendapatkan ID-nya
+    const { data: createdUser } = await supabase.from('users').select('id, name').eq('username', userData.username).single();
+    if (createdUser) {
+        await logActivity(createdUser.id, "register", `New user ${createdUser.name} registered`);
     }
-  }
-  const user = Object.values(users).find((u) => u.id === id)
-  if (user) {
-    const { password, ...userWithoutPassword } = user
-    return userWithoutPassword
-  }
-  return null
-}
 
-export const getAllPages = (): Page[] => {
-  if (typeof window !== 'undefined') {
-    const savedPages = localStorage.getItem('dashboard_pages')
-    if (savedPages) {
-      const parsedPages = JSON.parse(savedPages)
-      Object.keys(parsedPages).forEach((key) => {
-        const p = parsedPages[key]
-        p.createdAt = new Date(p.createdAt)
-        p.updatedAt = new Date(p.updatedAt)
-      })
-      Object.assign(pages, parsedPages)
+    return true;
+};
+
+export const createUser = async (userData: any): Promise<boolean> => {
+    const { error } = await supabase.from('users').insert([userData]);
+    if (error) {
+        console.error('Error creating user:', error);
+        return false;
     }
-  }
-  return Object.values(pages)
-}
+    await logActivity("system", "user_create", `New user ${userData.name} created with role ${userData.role}`);
+    return true;
+};
 
-export const getPageById = (id: string): Page | null => {
-  if (typeof window !== 'undefined') {
-    const savedPages = localStorage.getItem('dashboard_pages')
-    if (savedPages) {
-      const parsedPages = JSON.parse(savedPages)
-      Object.keys(parsedPages).forEach((key) => {
-        const p = parsedPages[key]
-        p.createdAt = new Date(p.createdAt)
-        p.updatedAt = new Date(p.updatedAt)
-      })
-      Object.assign(pages, parsedPages)
+export const updateUserPassword = async (userId: string, newPassword: string): Promise<boolean> => {
+    const { error } = await supabase.from('users').update({ password: newPassword }).eq('id', userId);
+    if (error) {
+        console.error('Error updating password:', error);
+        return false;
     }
-  }
-  return pages[id] || null
+    await logActivity(userId, "password_change", `Password changed for user ID ${userId}`);
+    return true;
 }
 
-export const updateUser = (userId: string, updates: Partial<User>): boolean => {
-  const userEntry = Object.entries(users).find(([_, user]) => user.id === userId)
-  if (userEntry) {
-    const [username, user] = userEntry
-    users[username] = { ...user, ...updates }
-    // Save to localStorage for persistence
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('dashboard_users', JSON.stringify(users))
+export const getAllUsers = async (): Promise<User[]> => {
+  const { data, error } = await supabase.from('users').select('*');
+  if (error) {
+    console.error("Error fetching users:", error);
+    return [];
+  }
+  // Menghapus properti password dari setiap objek user
+  return data.map(({ password, ...user }) => user);
+};
+
+export const getUserById = async (id: string): Promise<User | null> => {
+    const { data, error } = await supabase.from('users').select('*').eq('id', id).single();
+    if (error || !data) {
+        return null;
     }
-    logActivity(userId, "user_update", `User ${user.name} updated`)
-    return true
-  }
-  return false
-}
+    const { password, ...userWithoutPassword } = data;
+    return userWithoutPassword;
+};
 
-export const updateUserStatus = (userId: string, isActive: boolean): boolean => {
-  const user = Object.values(users).find((u) => u.id === userId)
-  if (user) {
-    user.isActive = isActive
-    // Save to localStorage for persistence
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('dashboard_users', JSON.stringify(users))
+export const updateUser = async (userId: string, updates: Partial<User>): Promise<boolean> => {
+    const { error } = await supabase.from('users').update(updates).eq('id', userId);
+    if (error) {
+        console.error('Error updating user:', error);
+        return false;
     }
-    logActivity(userId, "status_change", `User status changed to ${isActive ? "active" : "inactive"}`)
-    return true
-  }
-  return false
-}
+    await logActivity(userId, "user_update", `User data updated`);
+    return true;
+};
 
-export const deleteUser = (userId: string): boolean => {
-  const userEntry = Object.entries(users).find(([_, user]) => user.id === userId)
-  if (userEntry) {
-    delete users[userEntry[0]]
-    // Save to localStorage for persistence
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('dashboard_users', JSON.stringify(users))
+export const updateUserStatus = async (userId: string, isActive: boolean): Promise<boolean> => {
+    const { error } = await supabase.from('users').update({ isActive }).eq('id', userId);
+    if (error) {
+        return false;
     }
-    logActivity(userId, "delete", `User deleted`)
-    return true
-  }
-  return false
-}
+    await logActivity(userId, "status_change", `User status changed to ${isActive ? "active" : "inactive"}`);
+    return true;
+};
 
-export const assignPagesToUser = (userId: string, pageIds: string[]): boolean => {
-  const user = Object.values(users).find((u) => u.id === userId)
-  if (user) {
-    user.assignedPages = pageIds
-    // Save to localStorage for persistence
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('dashboard_users', JSON.stringify(users))
+export const deleteUser = async (userId: string): Promise<boolean> => {
+    const { error } = await supabase.from('users').delete().eq('id', userId);
+    if (error) {
+        console.error('Error deleting user:', error);
+        return false;
     }
-    logActivity(userId, "page_assignment", `Pages assigned: ${pageIds.join(", ")}`)
-    return true
-  }
-  return false
-}
+    await logActivity(userId, "delete", `User deleted`);
+    return true;
+};
 
-export const createPage = (pageData: Omit<Page, "id" | "createdAt" | "updatedAt">): Page => {
-  const newPage: Page = {
-    ...pageData,
-    id: Date.now().toString(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }
-
-  pages[newPage.id] = newPage
-  // Save to localStorage for persistence
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('dashboard_pages', JSON.stringify(pages))
-  }
-  logActivity(pageData.createdBy, "page_create", `Created page: ${pageData.title}`)
-  return newPage
-}
-
-export const updatePage = (pageId: string, updates: Partial<Page>): boolean => {
-  if (pages[pageId]) {
-    pages[pageId] = { ...pages[pageId], ...updates, updatedAt: new Date() }
-    // Save to localStorage for persistence
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('dashboard_pages', JSON.stringify(pages))
+export const assignPagesToUser = async (userId: string, pageIds: string[]): Promise<boolean> => {
+    const { error } = await supabase.from('users').update({ assignedPages: pageIds }).eq('id', userId);
+    if (error) {
+        console.error('Error assigning pages:', error);
+        return false;
     }
-    logActivity(updates.createdBy || "system", "page_update", `Updated page: ${pages[pageId].title}`)
-    return true
-  }
-  return false
-}
+    await logActivity(userId, "page_assignment", `Pages assigned: ${pageIds.join(", ")}`);
+    return true;
+};
 
-export const deletePage = (pageId: string, userId: string): boolean => {
-  if (pages[pageId]) {
-    const pageTitle = pages[pageId].title
-    delete pages[pageId]
-    // Save to localStorage for persistence
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('dashboard_pages', JSON.stringify(pages))
+// --- MANAJEMEN HALAMAN (PAGES) ---
+
+export const getAllPages = async (): Promise<Page[]> => {
+    const { data, error } = await supabase.from('pages').select('*'); // Ganti 'pages' dengan nama tabel halaman Anda
+    if (error) {
+        console.error("Error fetching pages:", error);
+        return [];
     }
-    logActivity(userId, "page_delete", `Deleted page: ${pageTitle}`)
-    return true
-  }
-  return false
-}
+    return data;
+};
 
-export const logActivity = (userId: string, action: string, details: string): void => {
-  const activity: ActivityLog = {
-    id: Date.now().toString(),
-    userId,
-    action,
-    details,
-    timestamp: new Date(),
-    ipAddress: "192.168.1." + Math.floor(Math.random() * 255),
-  }
+export const getPageById = async (id: string): Promise<Page | null> => {
+    const { data, error } = await supabase.from('pages').select('*').eq('id', id).single();
+    if (error) {
+        return null;
+    }
+    return data;
+};
 
-  activityLogs.unshift(activity)
+export const createPage = async (pageData: Omit<Page, "id" | "createdAt" | "updatedAt">): Promise<Page | null> => {
+    const { data, error } = await supabase.from('pages').insert([pageData]).select().single();
+    if (error) {
+        console.error('Error creating page:', error);
+        return null;
+    }
+    await logActivity(pageData.createdBy, "page_create", `Created page: ${pageData.title}`);
+    return data;
+};
 
-  // Keep only last 1000 logs
-  if (activityLogs.length > 1000) {
-    activityLogs = activityLogs.slice(0, 1000)
-  }
-}
+export const updatePage = async (pageId: string, updates: Partial<Page>): Promise<boolean> => {
+    const { error } = await supabase.from('pages').update({ ...updates, updatedAt: new Date().toISOString() }).eq('id', pageId);
+    if (error) {
+        console.error('Error updating page:', error);
+        return false;
+    }
+    await logActivity(updates.createdBy || "system", "page_update", `Updated page ID: ${pageId}`);
+    return true;
+};
 
+export const deletePage = async (pageId: string, userId: string): Promise<boolean> => {
+    const { data: pageData } = await getPageById(pageId); // Ambil data halaman dulu untuk log
+    const { error } = await supabase.from('pages').delete().eq('id', pageId);
+    if (error) {
+        console.error('Error deleting page:', error);
+        return false;
+    }
+    await logActivity(userId, "page_delete", `Deleted page: ${pageData?.title || pageId}`);
+    return true;
+};
 
-export const getActivityLogs = (limit = 50): ActivityLog[] => {
-  return activityLogs.slice(0, limit)
-}
+// --- LOG AKTIVITAS ---
 
-export const getDashboardStats = () => {
-  const totalUsers = Object.keys(users).length
-  const activeUsers = Object.values(users).filter((u) => u.isActive).length
-  const totalPages = Object.keys(pages).length
-  const activePages = Object.values(pages).filter((p) => p.isActive).length
+export const logActivity = async (userId: string, action: string, details: string): Promise<void> => {
+    const activity: Omit<ActivityLog, 'id' | 'timestamp'> = {
+        userId,
+        action,
+        details,
+        ipAddress: "127.0.0.1", // Bisa diganti dengan IP asli jika di server
+    };
+    await supabase.from('activity_logs').insert([activity]); // Ganti 'activity_logs' dengan nama tabel Anda
+};
 
-  // Calculate traffic from activity logs
-  const today = new Date()
-  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  const todayActivities = activityLogs.filter((log) => log.timestamp >= todayStart)
+export const getActivityLogs = async (limit = 50): Promise<ActivityLog[]> => {
+    const { data, error } = await supabase
+        .from('activity_logs')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(limit);
+    
+    if (error) {
+        return [];
+    }
+    return data;
+};
 
-  const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-  const monthlyActivities = activityLogs.filter((log) => log.timestamp >= thisMonth)
+// --- STATISTIK ---
 
-  // Recent registrations (last 30 days)
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-  const recentRegistrations = Object.values(users).filter((u) => u.createdAt >= thirtyDaysAgo).length
+export const getDashboardStats = async () => {
+    // Fungsi ini memerlukan beberapa query terpisah
+    const { count: totalUsers } = await supabase.from('users').select('*', { count: 'exact', head: true });
+    const { count: activeUsers } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('isActive', true);
+    const { count: totalPages } = await supabase.from('pages').select('*', { count: 'exact', head: true });
+    const { count: activePages } = await supabase.from('pages').select('*', { count: 'exact', head: true }).eq('isActive', true);
+    
+    // Statistik lainnya bisa ditambahkan sesuai kebutuhan
+    return {
+        totalUsers: totalUsers ?? 0,
+        activeUsers: activeUsers ?? 0,
+        totalPages: totalPages ?? 0,
+        activePages: activePages ?? 0,
+        // Properti lain bisa di-hardcode atau dihitung jika ada datanya
+        dailyTraffic: 0, 
+        monthlyTraffic: 0,
+        recentRegistrations: 0,
+        lastActivity: new Date(),
+    };
+};
 
-  return {
-    totalUsers,
-    activeUsers,
-    totalPages,
-    activePages,
-    dailyTraffic: todayActivities.length,
-    monthlyTraffic: monthlyActivities.length,
-    recentRegistrations,
-    lastActivity: activityLogs[0]?.timestamp || new Date(),
-  }
-}
+// --- DATA STATIS ---
 
 export const getPageSubTypes = () => {
   return {
     powerbi: ["dashboard", "report", "analytics"],
     spreadsheet: ["report", "analytics", "data-entry"],
     html: ["custom", "widget", "form", "landing"],
-  }
-}
+  };
+};
