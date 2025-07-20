@@ -55,7 +55,7 @@ export default function RegisterPage({ onBack }: RegisterPageProps) {
     <AuthLayout title="Register - Dashboard Shipment JNE">
       <div className="text-center mb-6">
         <h2 className="text-xl font-semibold text-white mb-2">Create Account</h2>
-        <p className="text-white/80 text-sm">Join Dashboard Shipment JNE</p>
+        <p className="text-white/80 text-sm">Dashboard Shipment JNE</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
