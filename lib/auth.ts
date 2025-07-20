@@ -264,21 +264,16 @@ export const deletePage = async (pageId: string, userId: string): Promise<boolea
 // --- LOG AKTIVITAS ---
 
 export const logActivity = async (userId: string, action: string, details: string): Promise<void> => {
-  try {
     const activity: Omit<ActivityLog, 'id' | 'timestamp'> = {
         userId,
         action,
         details,
-        ipAddress: "127.0.0.1",
+        ipAddress: "127.0.0.1", // Bisa diganti dengan IP asli jika di server
     };
-    await supabase.from('activity_logs').insert([activity]);
-  } catch (error) {
-    console.error('Error logging activity:', error);
-  }
+    await supabase.from('activity_logs').insert([activity]); // Ganti 'activity_logs' dengan nama tabel Anda
 };
 
 export const getActivityLogs = async (limit = 50): Promise<ActivityLog[]> => {
-  try {
     const { data, error } = await supabase
         .from('activity_logs')
         .select('*')
@@ -288,45 +283,30 @@ export const getActivityLogs = async (limit = 50): Promise<ActivityLog[]> => {
     if (error) {
         return [];
     }
-    return data || [];
-  } catch (error) {
-    console.error("Error fetching activity logs:", error);
-    return [];
-  }
+    return data;
 };
 
 // --- STATISTIK ---
 
 export const getDashboardStats = async () => {
-  try {
+    // Fungsi ini memerlukan beberapa query terpisah
     const { count: totalUsers } = await supabase.from('users').select('*', { count: 'exact', head: true });
     const { count: activeUsers } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('isActive', true);
     const { count: totalPages } = await supabase.from('pages').select('*', { count: 'exact', head: true });
     const { count: activePages } = await supabase.from('pages').select('*', { count: 'exact', head: true }).eq('isActive', true);
     
+    // Statistik lainnya bisa ditambahkan sesuai kebutuhan
     return {
         totalUsers: totalUsers ?? 0,
         activeUsers: activeUsers ?? 0,
         totalPages: totalPages ?? 0,
         activePages: activePages ?? 0,
+        // Properti lain bisa di-hardcode atau dihitung jika ada datanya
         dailyTraffic: 0, 
         monthlyTraffic: 0,
         recentRegistrations: 0,
         lastActivity: new Date(),
     };
-  } catch (error) {
-    console.error("Error fetching dashboard stats:", error);
-    return {
-      totalUsers: 0,
-      activeUsers: 0,
-      totalPages: 0,
-      activePages: 0,
-      dailyTraffic: 0,
-      monthlyTraffic: 0,
-      recentRegistrations: 0,
-      lastActivity: new Date(),
-    };
-  }
 };
 
 // --- DATA STATIS ---
