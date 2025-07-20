@@ -55,7 +55,7 @@ type AdminPage =
   | "page-view"
   | "user-pages"
   | "user-page-view"
-  | "user-dashboard-preview" // Tambahkan state ini
+  | "user-dashboard-preview"
 
 export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   const [currentPage, setCurrentPage] = useState<AdminPage>("dashboard")
@@ -215,8 +215,6 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                 Last updated: {new Date().toLocaleTimeString()}
               </div>
             </div>
-
-            {/* Real-time Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
                 {
@@ -272,8 +270,6 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                 )
               })}
             </div>
-
-            {/* Recent Activity */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Activity className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -322,27 +318,16 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                 </button>
               </div>
             </div>
-
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        User
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Role
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Last Login
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Actions
-                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">User</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Role</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Last Login</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
@@ -355,26 +340,12 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              userData.role === "admin"
-                                ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-                                : userData.role === "developer"
-                                  ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300"
-                                  : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
-                            }`}
-                          >
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${userData.role === "admin" ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" : userData.role === "developer" ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300" : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"}`}>
                             {userData.role}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              userData.isActive
-                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                                : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-                            }`}
-                          >
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${userData.isActive ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"}`}>
                             {userData.isActive ? "Active" : "Inactive"}
                           </span>
                         </td>
@@ -382,34 +353,10 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                           {userData.lastLogin ? new Date(userData.lastLogin).toLocaleDateString() : "Never"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                          <button
-                            onClick={() => handleViewUser(userData.id)}
-                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                            title="View Details"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleUserSettings(userData)}
-                            className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
-                            title="User Settings"
-                          >
-                            <Settings size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleUserStatusToggle(userData.id, userData.isActive)}
-                            className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                            title={userData.isActive ? "Deactivate" : "Activate"}
-                          >
-                            {userData.isActive ? <XCircle size={16} /> : <CheckCircle size={16} />}
-                          </button>
-                          <button
-                            onClick={() => handleDeleteUser(userData.id)}
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                            title="Delete User"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          <button onClick={() => handleViewUser(userData.id)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" title="View Details"><Eye size={16} /></button>
+                          <button onClick={() => handleUserSettings(userData)} className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300" title="User Settings"><Settings size={16} /></button>
+                          <button onClick={() => handleUserStatusToggle(userData.id, userData.isActive)} className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300" title={userData.isActive ? "Deactivate" : "Activate"}>{userData.isActive ? <XCircle size={16} /> : <CheckCircle size={16} />}</button>
+                          <button onClick={() => handleDeleteUser(userData.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Delete User"><Trash2 size={16} /></button>
                         </td>
                       </tr>
                     ))}
